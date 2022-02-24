@@ -1,64 +1,120 @@
 {
-  "name": "rne_project",
-  "version": "1.1.7",
+  "name": "loyalty-service",
+  "description": "Core middleware for loyalty backend integrations",
+  "version": "0.0.1",
+  "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "if [ $NODE_ENV ]; then vue-cli-service build --mode=$NODE_ENV; else vue-cli-service build; fi",
-    "build-dev": "vue-cli-service build",
-    "build-demo": "vue-cli-service build --mode demo",
-    "build-preprod": "vue-cli-service build --mode preprod",
-    "build-prod": "vue-cli-service build --mode prod",
-    "lint": "vue-cli-service lint"
+    "strap": "lerna bootstrap",
+    "build": "yarn build:ci:common && yarn build:ci:parts",
+    "build:ci:common": "lerna exec --stream --concurrency 3 --ignore 'core-profile' --ignore 'core-transactions' --ignore '*service*' -- yarn build",
+    "build:ci:parts": "lerna exec --stream --concurrency 1 --scope 'core-profile' --scope 'core-transactions' --scope '*service*' -- yarn build",
+    "build:ci:core": "lerna exec --stream --concurrency 1 --scope 'core*' -- yarn build",
+    "build:ci:services": "lerna exec --stream --concurrency 1 --scope 'services*' -- yarn build",
+    "build:ci:cas": "lerna exec --stream --concurrency 1 --scope 'directory-service*' -- yarn build",
+    "build:dev": "lerna exec --stream --concurrency 2 -- yarn build:dev",
+    "build:shared": "lerna exec --stream --scope '@loyalty-core/*' -- yarn build:dev",
+    "build:cas": "lerna exec --stream --scope 'directory-service*' -- yarn build:dev",
+    "build:core": "lerna exec --stream --scope '@core/*' --scope 'core*' -- yarn build:dev",
+    "build:services": "lerna exec --stream --scope 'services*' -- yarn build:dev",
+    "build:profile": "lerna exec --stream --scope '*profile*' -- yarn build:dev",
+    "build:transactions": "lerna exec --stream --scope '*transactions*' -- yarn build:dev",
+    "bt": "yarn build:dev && yarn test",
+    "test": "jest --silent --coverage",
+    "test:core": "jest core/* --verbose --silent",
+    "test:profile": "jest core/profile/* services/* --verbose --silent",
+    "test:transactions": "jest core/transactions/* --verbose --silent",
+    "test:services": "jest services/* --verbose --silent",
+    "test:cas": "jest cas/* --verbose --silent",
+    "test:shared": "jest shared/* --verbose --silent",
+    "test:deployment": "jest deployment/* --verbose --silent",
+    "test:integration": "bash ./scripts/postman_tests.sh",
+    "lint": "eslint '*/**/*.ts' --fix && lerna run lint",
+    "clean": "npm-run-all --parallel clean:*",
+    "clean:dist": "find . -name dist -exec rm -rf '{}' +",
+    "clean:modules": "find . -name node_modules -exec rm -rf '{}' +",
+    "clean:tscache": "find . -name tsconfig.tsbuildinfo -exec rm -rf '{}' +",
+    "clean:cdk": "find . -name cdk.out -exec rm -rf '{}' +",
+    "_versions": "echo node=$(node --version) && echo yarn=$(yarn --version) && echo cdk=$(cdk --version) && echo sam=$(sam --version) && echo lerna=$(lerna --version) && echo jest=$(jest --version)",
+    "deploy:ci:dev": "lerna run deploy:ci:dev",
+    "undeploy:stacks": "bash deployment/stack-clean-up.sh",
+    "bootstrap:core:dev": "./deployment/bootstrap-account.sh core dev",
+    "bootstrap:core:preprod": "./deployment/bootstrap-account.sh core preprod",
+    "bootstrap:core:prod": "./deployment/bootstrap-account.sh core prod",
+    "bootstrap:services:dev": "./deployment/bootstrap-account.sh services dev",
+    "bootstrap:services:preprod": "./deployment/bootstrap-account.sh services preprod",
+    "bootstrap:services:prod": "./deployment/bootstrap-account.sh services prod",
+    "get:apikey": "bash ./scripts/get_api_key.sh",
+    "release:preprod": "bash ./deployment/release.sh master preprod core services cas",
+    "release:prod": "bash ./deployment/release.sh preprod prod core services cas"
   },
-  "dependencies": {
-    "axios": "^0.19.2",
-    "axios-mock-adapter": "^1.18.1",
-    "core-js": "^3.6.4",
-    "es6-promise": "^4.2.8",
-    "js-file-download": "^0.4.12",
-    "vue": "^2.6.11",
-    "vue-i18n": "^8.18.2",
-    "vue-loading-overlay": "^3.3.2",
-    "vue-router": "^3.1.6",
-    "vuedraggable": "^2.24.3",
-    "vuetify": "^2.2.11",
-    "vuex": "^3.4.0"
+  "workspaces": {
+    "packages": [
+      "shared/*",
+      "proxy/tests/*",
+      "core/*",
+      "services/*",
+      "deployment/*",
+      "cas/*"
+    ]
   },
-  "devDependencies": {
-    "@vue/cli-plugin-babel": "~4.3.0",
-    "@vue/cli-plugin-eslint": "~4.3.0",
-    "@vue/cli-plugin-router": "~4.3.0",
-    "@vue/eslint-config-prettier": "^6.0.0",
-    "babel-eslint": "^10.1.0",
-    "eslint": "^6.7.2",
-    "eslint-plugin-prettier": "^3.1.1",
-    "eslint-plugin-vue": "^6.2.2",
-    "prettier": "^1.19.1",
-    "sass": "^1.19.0",
-    "sass-loader": "^8.0.0",
-    "vue-cli-plugin-vuetify": "~2.0.5",
-    "vue-template-compiler": "^2.6.11",
-    "vuetify-loader": "^1.3.0"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
+  "jest": {
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "diagnostics": {
+          "warnOnly": true
+        }
+      }
     },
-    "extends": [
-      "plugin:vue/essential",
-      "eslint:recommended",
-      "@vue/prettier"
+    "testPathIgnorePatterns": [
+      "/integration/"
     ],
-    "parserOptions": {
-      "parser": "babel-eslint"
-    },
-    "rules": {}
+    "setupFilesAfterEnv": [
+      "./setupTests.js"
+    ]
   },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead"
-  ]
+  "dependencies": {},
+  "devDependencies": {
+    "@types/aws-lambda": "8.10.85",
+    "@types/jest": "27.0.3",
+    "@types/node": "14.18.0",
+    "@types/uuid": "8.3.3",
+    "@typescript-eslint/eslint-plugin": "5.10.1",
+    "@typescript-eslint/parser": "5.10.1",
+    "aws-sdk": "2.1043.0",
+    "eslint": "8.7.0",
+    "eslint-config-prettier": "8.3.0",
+    "eslint-plugin-jest": "25.7.0",
+    "eslint-plugin-prettier": "4.0.0",
+    "jest": "27.4.7",
+    "lerna": "4.0.0",
+    "lodash": "4.17.21",
+    "nanoid": "3.2.0",
+    "newman": "5.3.1",
+    "node-fetch": "3.2.0",
+    "npm-run-all": "4.1.5",
+    "prettier": "2.5.1",
+    "ts-jest": "27.1.3",
+    "ts-loader": "9.2.6",
+    "typescript": "4.5.5",
+    "uuid": "8.3.2",
+    "webpack": "5.67.0",
+    "webpack-aws-externals": "2.0.1",
+    "webpack-bundle-analyzer": "4.5.0",
+    "webpack-cli": "4.9.2",
+    "webpack-merge": "5.8.0",
+    "webpack-node-externals": "3.0.0"
+  },
+  "resolutions": {
+    "**/@types/aws-lambda": "8.10.85"
+  },
+  "engines": {
+    "node": ">=14.17.2",
+    "npm": "8.3.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FinnairOyj/loyalty-core.git"
+  }
 }

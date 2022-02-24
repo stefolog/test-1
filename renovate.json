@@ -1,10 +1,24 @@
 {
-  "extends": ["config:base", "group:test", "group:linters", "group:definitelyTyped", ":masterIssue"],
-  "schedule": ["after 1am and before 7am on monday"],
+  "extends": ["config:base", "schedule:earlyMondays", ":semanticCommits"],
+  "rebaseStalePrs": true,
+  "timezone": "Europe/Helsinki",
+  "prConcurrentLimit": 0,
+  "prHourlyLimit": 0,
+  "vulnerabilityAlerts": {
+    "labels": ["security-alert"]
+  },
+  "lockFileMaintenance": { "enabled": true, "automerge": "true" },
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": false
+      "groupName": "minor-versions",
+      "description": "Automerge all minor versions and below",
+      "packagePatterns": ["*"],
+      "updateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "matchPackageNames": ["node", "@types/node"],
+      "allowedVersions": "/^14.*$/"
     },
     {
       "groupName": "v-validation",
@@ -13,6 +27,19 @@
     {
       "groupName": "dazn-lambda-powertools",
       "matchPackagePatterns": ["^@dazn/lambda-powertools-"]
+    }
+  ],
+  "encrypted": {
+    "npmToken": "lap5/pk++yzuAmpcMyaisYZXKwbSOT7JoyrTFdNDS6PWuEsnHKQjs0Di7StDekrA7ZkJLTpOE6eZweKr93OEkNauvsuHcrS1pfLNM2V+7tMtGmkJxeAF9OepOs4ZRJaN38/274iI+/ApZ7jRF7HJ3EY/zVDNzCLjlio1Qx8ujsklGKrQNClxXcRAS114JSKGV2EZm+r0qQusBmesYYMmBVc1ngHz7LLBjmysvX/TGGXT4E4Tpe0kwOo3gXrlkXN0oEfUnQ4QNJ5VGeHzpV8dhjSTol5j4h1/HF6H/sAC+cEGYL5Nh7ECZTikLJE+bSkc28/0qdvCwSWgWTXuPeMQHA=="
+  },
+  "npmrc": "@finnairoyj:registry=https://npm.pkg.github.com\n@fcom:registry=https://nexus.code.tools.cloud.finnair.com/nexus/repository/npm/\n//nexus.code.tools.cloud.finnair.com/nexus/repository/npm/:_auth=${NPM_TOKEN}",
+  "hostRules": [
+    {
+      "hostType": "npm",
+      "hostName": "npm.pkg.github.com",
+      "encrypted": {
+        "token": "vr+8rBhOOwIYcTeNPMHgk2w1LV7nzm9cevJqNYWX68JPYufuy0v9osJv9vxyuhUOgfrnrT9ba1EGz5q9cHvbjWX//OzK2v7KiNpY76kwZLjqxMWcwFGXcmEmv6kJCWNRtaU5POBTmPt4sLybYO1Hc1qLZnOPeoVhysOW3ejKzz5Yppkvpilkb+i8dn+ZAK7xPr65flNPYxrICPLzU2Wi2fpUS8VI4PsRTZrYvO+Iy21DCqA+ZIC/rl+uwOrSf1/U3Py1csC7eIDSMCTZxJv2jWKbUFG2d/PNeNfg09FDT2JjJHBcT8p8mnHr9MX1IMLH2E03VfckYze602XEszkzSA=="
+      }
     }
   ]
 }
