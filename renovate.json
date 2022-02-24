@@ -1,0 +1,18 @@
+{
+  "extends": ["config:base", "group:test", "group:linters", "group:definitelyTyped", ":masterIssue"],
+  "schedule": ["after 1am and before 7am on monday"],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": false
+    },
+    {
+      "groupName": "v-validation",
+      "matchPackageNames": ["@finnair/v-validation", "@finnair/v-validation-moment", "@finnair/path"]
+    },
+    {
+      "groupName": "dazn-lambda-powertools",
+      "matchPackagePatterns": ["^@dazn/lambda-powertools-"]
+    }
+  ]
+}
